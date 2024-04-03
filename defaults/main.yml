@@ -1,0 +1,187 @@
+---
+solr_version: 9.5.0
+solr_download_url: >-
+   https://archive.apache.org/dist/solr/solr/{{ solr_version }}/solr-{{ solr_version }}.tgz
+solr_download_checksum: >-
+  sha512:e34b2421db8586691ff41b86beca77bcb61243ce8edfade74eda8da4b0fabde0078884db301350a0d0dfc4a6fee46320ddf059469300444da4e3693220df5e40
+# solr_local_download_directory: ~/.cache/ansible/solr
+# solr_local_download_directory_mode: "0750"
+
+solr_java_package: openjdk-17-jre-headless
+solr_package_dependencies:
+  - gzip
+  - rsync
+  - tar
+  - "{{ solr_java_package }}"
+solr_package_state: present
+# solr_package_cache_valid_time: 600
+
+solr_base_directory: /opt/solr
+solr_download_directory: "{{ solr_base_directory }}/archives"
+solr_release_directory: "{{ solr_base_directory }}/releases"
+solr_release_path: "{{ solr_release_directory }}/solr-{{ solr_version }}"
+solr_current_release_path: "{{ solr_release_directory }}/current"
+
+solr_bin_file: "{{ solr_current_release_path }}/bin/solr"
+solr_configuration_file: "{{ solr_home_directory }}/solr.xml"
+
+solr_unarchive_extra_opts:
+  - --strip-components=1
+  - --exclude=bin/solr.in.sh
+# solr_force_unarchive: false
+
+solr_service_enabled: true
+# solr_service_state: started
+solr_restart_handler_state: restarted
+
+solr_user: solr
+# solr_user_uid:
+solr_user_group: solr
+# solr_user_group_gid:
+solr_user_shell: /usr/sbin/nologin
+solr_user_home: /var/lib/solr
+# solr_user_create_home: true
+
+solr_configuration_directory: /etc/solr
+solr_configuration_sets_directory: "{{ solr_configuration_directory }}/configsets"
+# solr_local_configuration_sets_directory: solr_servers/configsets
+solr_home_directory: "{{ solr_user_home }}"
+solr_log_directory: /var/log/solr
+solr_pid_directory: /run/solr
+solr_shared_library_directory: "{{ solr_home_directory }}/lib"
+
+solr_configuration:
+  # content: |
+  #   <solr>
+  #   </sor>
+  # template: var/lib/solr.xml.j2
+  file: var/lib/solr/solr.xml
+  owner: "{{ solr_user }}"
+  group: "{{ solr_user_group }}"
+
+# solr_security_configuration:
+#   authentication:
+#     blockUnknown: false
+#   # authentication:
+#   #   class: solr.BasicAuthPlugin
+#   #   credentials:
+#   #     solr: IV0EHq1OnNrj6gvRCwvFwTrZ1+z1oBbnQdiVC3otuq0= Ndd7LKvVBAaZIF0QAVi1ekCfAJXr1GGfLtRUXhgrF8c=
+# solr_group_security_configuration: {}
+# solr_host_security_configuration: {}
+# solr_security_configuration_file: "{{ solr_home_directory }}/security.json"
+
+solr_configuration_files:
+  log4j2.xml:
+    file: etc/solr/log4j2.xml
+solr_group_configuration_files: {}
+solr_host_configuration_files: {}
+
+solr_environment_file: "/etc/default/solr.in.sh"
+# solr_environment_file_owner:
+# solr_environment_file_group:
+# solr_environment_file_mode:
+
+# see below for a list of environment variable to system property mappings
+# https://github.com/apache/solr/blob/c512116f6a20b3ccd0c76c0743053553da2ff53b/solr/solrj/src/resources/EnvToSyspropMappings.properties
+solr_environment:
+  LOG4J_PROPS: "{{ solr_configuration_directory }}/log4j2.xml"
+  SOLR_HOME: "{{ solr_home_directory }}"
+  SOLR_JETTY_HOST: "{{ solr_jetty_host }}"
+  SOLR_PID_DIR: "{{ solr_pid_directory }}"
+  SOLR_LOGS_DIR: "{{ solr_log_directory }}"
+  SOLR_HOST: "{{ solr_host }}"
+  SOLR_PORT: "{{ solr_port }}"
+  SOLR_SHARED_LIB: "{{ solr_shared_library_directory }}"
+  ZK_HOST: "{{ solr_zk_host }}"
+solr_group_environment: {}
+solr_host_environment: {}
+
+solr_host: "{{ inventory_hostname }}"
+solr_port: 8983
+solr_jetty_host: 127.0.0.1
+solr_url: "http://{{ solr_jetty_host }}:{{ solr_port }}"
+solr_base_url: "{{ solr_url }}/solr"
+solr_api_v1_url: "{{ solr_base_url }}/admin"
+solr_api_v2_url: "{{ solr_url }}/api"
+# solr_api_username: solr
+# solr_api_password: SolrRocks
+# solr_api_timeout: 10
+
+# https://solr.apache.org/guide/solr/latest/deployment-guide/collection-management.html#create
+solr_collections: {}
+# solr_collections:
+#   films:
+#     name: example-films
+#     config: films
+#     numShards: 3
+#     replicationFactor: 2
+solr_configuration_sets: {}
+# solr_configuration_sets:
+  # _default:
+  #   directory: _default
+  # example:
+  #   directory: example1
+solr_configuration_set_synchronize_options:
+  archive: false
+  checksum: true
+  delete: true
+  links: true
+  recursive: true
+  rsync_opts:
+    - "--exclude=.*"
+    - "--delete-excluded"
+
+solr_zk_hosts: []
+# solr_zk_hosts:
+#   - "zookeeper1:2181"
+#   - "zookeeper2:2181"
+solr_zk_chroot: ""
+solr_zk_host: >-
+  {{
+    '{}{}{}'.format(
+      ','.join(solr_zk_hosts) if solr_zk_hosts else '',
+      '/' if (solr_zk_hosts and solr_zk_chroot and not solr_zk_chroot.startswith('/')) else '',
+      solr_zk_chroot if (solr_zk_hosts and solr_zk_chroot) else ''
+    )
+  }}
+solr_cloud: "{{ solr_zk_host | d() | ternary(true, false) }}"
+
+# solr_shared_libraries:
+#   example-lib-1.0.2.jar:
+#     file: solr/libs/example-lib-1.0.2.jar
+#   example-lib-1.0.1.jar:
+#     state: absent
+#   different-lib-0.5.1.jar:
+#     url: https://example.com/different-lib-0.5.1.jar
+solr_shared_libraries: {}
+
+solr_service_configuration:
+  Unit:
+    Description: Apache Solr
+    Requires: network-online.target
+    After: network-online.target
+  Service:
+    User: "{{ solr_user }}"
+    Group: "{{ solr_user_group }}"
+    ExecStart: "{{ solr_bin_file }} start -f"
+    ExecStop: "{{ solr_bin_file }} stop"
+    LimitNOFILE: "65535:65535"
+    LimitNPROC: "65535:65535"
+    PrivateDevices: true
+    PrivateTmp: true
+    ProtectControlGroups: true
+    ProtectKernelTunables: true
+    ProtectSystem: strict
+    ReadWritePaths: >-
+     {{ solr_home_directory }}
+     {{ solr_log_directory }}
+    RuntimeDirectory: solr
+    SuccessExitStatus: 5 6
+    TimeoutStopSec: 200s
+  Install:
+    WantedBy: multi-user.target
+solr_group_service_configuration: {}
+solr_host_service_configuration: {}
+
+solr_service_configuration_list_merge: replace
+solr_service_configuration_recursive_merge: true
