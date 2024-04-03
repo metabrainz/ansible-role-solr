@@ -1,0 +1,164 @@
+---
+- name: Install Solr dependencies
+  ansible.builtin.apt:
+    name: "{{ solr_package_dependencies }}"
+    state: "{{ solr_package_state }}"
+    cache_valid_time: "{{ solr_package_cache_valid_time | d(omit) }}"
+  ignore_errors: "{{ ansible_check_mode }}"
+
+- name: Create Solr group
+  ansible.builtin.group:
+    name: "{{ solr_user_group }}"
+    gid: "{{ solr_user_group_gid | d(omit) }}"
+    state: present
+    system: true
+
+- name: Create Solr user
+  ansible.builtin.user:
+    name: "{{ solr_user }}"
+    uid: "{{ solr_user_uid | d(omit) }}"
+    group: "{{ solr_user_group }}"
+    shell: "{{ solr_user_shell }}"
+    system: true
+    create_home: "{{ solr_user_create_home | d(true) }}"
+    home: "{{ solr_user_home }}"
+
+- name: Create Solr directories
+  ansible.builtin.file:
+    path: "{{ item.path | d(item) }}"
+    owner: "{{ item.owner | d('root') }}"
+    group: "{{ item.group | d('root') }}"
+    mode: "{{ item.mode | d('0755') }}"
+    state: directory
+  loop:
+    - path: "{{ solr_configuration_directory }}"
+      group: "{{ solr_user_group }}"
+      mode: "0750"
+    - path: "{{ solr_configuration_sets_directory }}"
+      group: "{{ solr_user_group }}"
+      mode: "0750"
+    - "{{ solr_download_directory }}"
+    - path: "{{ solr_log_directory }}"
+      owner: "{{ solr_user }}"
+      group: "{{ solr_user_group }}"
+    - "{{ solr_release_path }}"
+    - path: "{{ solr_shared_library_directory }}"
+      owner: "{{ solr_user }}"
+      group: "{{ solr_user_group }}" 
+
+- name: Stat Solr current release path
+  ansible.builtin.stat:
+    path: "{{ solr_current_release_path }}"
+    get_attributes: false
+    get_checksum: false
+    get_mime: false
+  register: _solr_current_release_path
+
+- name: Fail if Solr current release path exists and is not a symlink
+  ansible.builtin.fail:
+    msg: "{{ solr_current_release_path }} exists and is not a symlink, aborting..."
+  when:
+    - _solr_current_release_path.stat.islnk is defined
+    - not _solr_current_release_path.stat.islnk
+
+- name: Check if Solr archive exists on hosts
+  when: solr_local_download_directory | d()
+  ansible.builtin.stat:
+    path: "{{ solr_download_directory }}/{{ solr_download_url | basename }}"
+    get_attributes: false
+    get_checksum: false
+    get_mime: false
+  register: _solr_archive
+
+- name: Download Solr archive locally and copy to hosts
+  when:
+    - solr_local_download_directory | d()
+    - not _solr_archive.stat.isreg | d()
+  block:
+    - name: Create local download directory
+      ansible.builtin.file:
+        path: "{{ solr_local_download_directory }}"
+        mode: " {{ solr_local_download_directory_mode | d('0755') }}"
+        state: directory
+      delegate_to: localhost
+      run_once: true
+      vars:
+        ansible_become: false
+
+    - name: Download Solr archive
+      ansible.builtin.get_url:
+        url: "{{ solr_download_url }}"
+        dest: "{{ solr_local_download_directory }}/{{ solr_download_url | basename }}"
+        checksum: "{{ solr_download_checksum | d(omit) }}"
+        mode: "0644"
+      delegate_to: localhost
+      run_once: true
+      ignore_errors: "{{ ansible_check_mode }}"
+      vars:
+        ansible_become: false
+
+    - name: Copy Solr archive to hosts
+      ansible.builtin.copy:
+        src: "{{ solr_local_download_directory }}/{{ solr_download_url | basename }}"
+        dest: "{{ solr_download_directory }}"
+        mode: "0644"
+      register: _solr_copy
+      ignore_errors: "{{ ansible_check_mode }}"
+
+- name: Download Solr archive on hosts
+  ansible.builtin.get_url:
+    url: "{{ solr_download_url }}"
+    dest: "{{ solr_download_directory }}/{{ solr_download_url | basename }}"
+    checksum: "{{ solr_download_checksum | d(omit) }}"
+    mode: "0644"
+  register: _solr_download
+  ignore_errors: "{{ ansible_check_mode }}"
+  when: not solr_local_download_directory | d()
+
+- name: Unarchive Solr
+  ansible.builtin.unarchive:
+    src: "{{ solr_download_directory }}/{{ solr_download_url | basename }}"
+    dest: "{{ solr_release_path }}"
+    mode: "0755"
+    remote_src: true
+    extra_opts: "{{ solr_unarchive_extra_opts }}"
+  ignore_errors: "{{ ansible_check_mode }}"
+  when: >-
+    (_solr_copy | d()) is changed or
+    (_solr_download | d()) is changed or
+    (solr_force_unarchive | d())
+
+- name: Install Solr current release symlink
+  ansible.builtin.file:
+    src: "{{ solr_release_path }}"
+    dest: "{{ solr_current_release_path }}"
+    state: link
+  notify: restart solr
+  ignore_errors: "{{ ansible_check_mode }}"
+
+- name: Delete Solr shared libraries
+  ansible.builtin.file:
+    path: "{{ solr_shared_library_directory }}/{{ item.key }}"
+    state: absent
+  when: item.value.state | d() == "absent"
+  loop: "{{ solr_shared_libraries | dict2items }}"
+  notify: restart solr
+
+- name: Download Solr shared libraries
+  ansible.builtin.get_url:
+    dest: "{{ solr_shared_library_directory }}/{{ item.key }}"
+    url: "{{ item.value.url }}"
+    checksum: "{{ item.value.checksum | d(omit) }}"
+    mode: "{{ item.value.mode | d('0644') }}"
+  when: item.value.url | d()
+  loop: "{{ solr_shared_libraries | dict2items }}"
+  notify: restart solr
+
+- name: Copy Solr shared libraries
+  ansible.builtin.copy:
+    dest: "{{ solr_shared_library_directory }}/{{ item.key }}"
+    src: "{{ item.value.file }}"
+    mode: "{{ item.value.mode | d('0644') }}"
+  when: (item.value.file | d()) and (item.value.state | d()) != "absent"
+  loop: "{{ solr_shared_libraries | dict2items }}"
+  notify: restart solr

@@ -1,0 +1,13 @@
+---
+- name: Reload SystemD
+  listen: reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Restart Solr
+  listen: restart solr
+  ansible.builtin.service:
+    name: "{{ solr_service_name }}"
+    state: "{{ solr_restart_handler_state }}"
+  when: solr_service_enabled | bool
+  ignore_errors: "{{ ansible_check_mode }}"

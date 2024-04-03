@@ -1,0 +1,4 @@
+---
+solr_service_name: solr
+
+solr_default_api_timeout: 10

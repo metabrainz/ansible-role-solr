@@ -1,0 +1,21 @@
+---
+- name: Prepare
+  hosts: all
+  tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        cache_valid_time: 600
+
+    # update-alternatives: error: error creating symbolic link '/usr/share/man/man1/java.1.gz.dpkg-tmp': No such file or directory
+    - name: Create man1 directory for update-alternatives
+      ansible.builtin.file:
+        path: /usr/share/man/man1
+        mode: "0755"
+        state: directory
+
+- name: Prepare ZooKeeper servers
+  hosts: zookeeper_servers
+  tasks:
+    - name: Install ZooKeeper
+      ansible.builtin.include_role:
+        name: metabrainz.zookeeper

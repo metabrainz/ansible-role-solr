@@ -1,0 +1,12 @@
+#jinja2: trim_blocks: True, lstrip_blocks: True
+{% if item.value is mapping -%}
+{%   if item.value.content is defined -%}
+{{ item.value.content }}
+{%   elif item.value.template is defined %}
+{{ lookup('ansible.builtin.template', item.value.template) }}
+{%   else %}
+{{ lookup('ansible.builtin.file', item.value.file | mandatory('content, template or file must be specified')) }}
+{%-   endif %}
+{% else %}
+{{ item.value | string }}
+{%- endif %}

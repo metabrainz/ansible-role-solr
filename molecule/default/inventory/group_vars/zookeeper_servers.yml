@@ -1,0 +1,3 @@
+zookeeper_server_configuration:
+  hostname: "{{ inventory_hostname }}"
+  id: "{{ groups['zookeeper_servers'].index(inventory_hostname) + 1 }}"

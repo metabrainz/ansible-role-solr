@@ -1,0 +1,12 @@
+#jinja2: trim_blocks: True, lstrip_blocks: True
+# {{ ansible_managed }}
+{% if _environment_vars %}
+
+{%   for key, value in (_environment_vars | dictsort) %}
+{%     if value is boolean %}
+{{ key }}={{ value | lower }}
+{%     else %}
+{{ key }}={{ value | quote }}
+{%     endif %}
+{%   endfor %}
+{% endif %}

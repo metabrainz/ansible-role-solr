@@ -1,0 +1,8 @@
+---
+- name: Converge
+  hosts: solr_servers
+  gather_facts: false
+  tasks:
+    - name: "Include metabrainz.solr"
+      ansible.builtin.include_role:
+        name: "metabrainz.solr"
