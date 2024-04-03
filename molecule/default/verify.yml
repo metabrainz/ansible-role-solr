@@ -1,0 +1,49 @@
+---
+- name: Verify
+  hosts: solr_servers
+  gather_facts: false
+  tasks:
+    - name: Ensure Solr service is started
+      ansible.builtin.service:
+        name: solr
+        state: started
+      register: result
+      check_mode: true
+      failed_when: result is changed
+
+    - name: Ensure Solr collection health is green
+      ansible.builtin.uri:
+        url: http://localhost:8983/api/cluster
+        body_format: json
+      register: result
+      changed_when: false
+      failed_when: >-
+        result.status != 200 or
+        result.json is not defined or
+        result.json.responseHeader.status != 0 or
+        result.json.cluster.collections.techproducts.replicationFactor != 2 or
+        result.json.cluster.collections.techproducts.shards | length != 2 or
+        result.json.cluster.collections.techproducts.health != "GREEN"
+
+    - name: Index techproducts data # noqa command-instead-of-shell run-once[task]
+      ansible.builtin.shell: >-
+        /opt/solr/releases/current/bin/solr
+        post -c techproducts
+        /opt/solr/releases/current/example/exampledocs/*
+      changed_when: true
+      run_once: true
+
+    - name: Ensure data has been indexed
+      ansible.builtin.uri:
+        url: http://localhost:8983/solr/techproducts/select?indent=on&q=*:*
+        body_format: json
+      register: result
+      changed_when: false
+      retries: 30
+      delay: 1
+      until:
+        - result.status == 200
+        - result.json is defined
+        - result.json.responseHeader is defined
+        - result.json.responseHeader.status == 0
+        - result.json.response.numFound == 51

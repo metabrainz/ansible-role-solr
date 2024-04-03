@@ -1,0 +1,74 @@
+- name: Install Solr SystemD service
+  ansible.builtin.template:
+    src: etc/systemd/system/solr.service.j2
+    dest: /etc/systemd/system/solr.service
+    mode: "0644"
+  notify:
+    - reload systemd
+    - restart solr
+  vars:
+    _service_config: >-
+      {{
+        solr_service_configuration | combine(
+          solr_group_service_configuration,
+          solr_host_service_configuration,
+          list_merge=solr_service_configuration_list_merge,
+          recursive=solr_service_configuration_recursive_merge
+        )
+      }}
+
+- name: Install Solr environment file
+  ansible.builtin.template:
+    src: etc/default/solr.in.sh.j2
+    dest: "{{ solr_environment_file }}"
+    owner: "{{ solr_environment_file_owner | d(omit) }}"
+    group: "{{ solr_environment_file_group | d(omit) }}"
+    mode: "{{ solr_environment_file_mode | d('0644') }}"
+  notify: restart solr
+  vars:
+    _solr_environment: >-
+      {{
+        solr_environment | combine(
+          solr_group_environment,
+          solr_host_environment
+        )
+      }}
+
+- name: Install Solr configuration file
+  ansible.builtin.template:
+    src: "etc/solr/file.j2"
+    dest: "{{ solr_configuration_file }}"
+    owner: "{{ item.value.owner | d(omit) }}"
+    group: "{{ item.value.group | d(omit) }}"
+    mode: "{{ item.value.mode | d('0644') }}"
+    backup: "{{ item.value.backup | d(omit) }}"
+  vars:
+    item:
+      value: "{{ solr_configuration }}"
+
+- name: Install Solr configuration files
+  ansible.builtin.template:
+    src: "etc/solr/file.j2"
+    dest: "{{ solr_configuration_directory }}/{{ item.key }}"
+    owner: "{{ item.value.owner | d(omit) }}"
+    group: "{{ item.value.group | d(omit) }}"
+    mode: "{{ item.value.mode | d('0644') }}"
+    backup: "{{ item.value.backup | d(omit) }}"
+  loop: "{{ _solr_configuration_files | dict2items }}"
+  notify: restart solr
+  vars:
+    _solr_configuration_files: >-
+      {{
+        solr_configuration_files | combine(
+          solr_group_configuration_files,
+          solr_host_configuration_files,
+          recursive=true
+        )
+      }}
+
+- name: Enable Solr service
+  ansible.builtin.service:
+    name: solr
+    enabled: "{{ solr_service_enabled }}"
+    state: "{{ solr_service_state | d(omit) }}"
+  ignore_errors: "{{ ansible_check_mode }}"

@@ -1,0 +1,17 @@
+---
+- name: Install Solr
+  ansible.builtin.import_tasks: installation.yml
+  tags:
+    - solr::install
+
+- name: Configure Solr
+  ansible.builtin.import_tasks: configuration.yml
+  tags:
+    - solr::configure
+
+- name: Configure SolrCloud
+  ansible.builtin.import_tasks: cloud.yml
+  tags:
+    - solr::configure
+    - solr::cloud
+  when: solr_cloud

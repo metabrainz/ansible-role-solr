@@ -1,0 +1,16 @@
+solr_jetty_host: 0.0.0.0
+
+solr_zk_chroot: /solr
+solr_zk_hosts: "{{ groups['zookeeper_servers'] }}"
+
+solr_local_configuration_sets_directory: configsets
+solr_configuration_sets:
+  techproducts:
+    directory: techproducts
+
+solr_collections:
+  techproducts:
+    name: techproducts
+    config: techproducts
+    replicationFactor: 2
+    numShards: 2

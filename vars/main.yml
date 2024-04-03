@@ -1,0 +1,5 @@
+---
+solr_bin_path: /opt/solr/releases/current/bin/solr
+solr_configuration_file: "{{ solr_home_directory }}/solr.xml"
+
+solr_default_api_timeout: 90

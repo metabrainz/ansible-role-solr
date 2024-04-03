@@ -1,0 +1,127 @@
+---
+- name: Create ZooKeeper chroot
+  ansible.builtin.command:
+    argv:
+      - "{{ solr_bin_path }}"
+      - zk
+      - mkroot
+      - -z
+      # we can't use solr_zk_host here as it includes the non-existent chroot
+      - "{{ solr_zk_hosts | join(',') }}"
+      - "{{ solr_zk_chroot }}"
+  when: solr_zk_chroot | d()
+  register: _solr_zk_mkroot
+  run_once: true
+  changed_when: >-
+    _solr_zk_mkroot.rc == 0 and
+    "KeeperErrorCode" not in _solr_zk_mkroot.stderr
+  failed_when: >-
+    _solr_zk_mkroot.rc != 0 and
+    "KeeperErrorCode = NodeExists" not in _solr_zk_mkroot.stderr
+  become: true
+  become_user: "{{ solr_user }}"
+
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers
+
+- name: Wait for Solr to start
+  ansible.builtin.uri:
+    url: "{{ solr_api_url }}/cluster"
+    url_username: "{{ solr_api_username | d(omit) }}"
+    url_password: "{{ solr_api_password | d(omit) }}"
+    force_basic_auth: "{{ solr_api_username is defined and solr_api_password is defined }}"
+    body_format: json
+  register: _solr_result
+  retries: 30
+  delay: 1
+  until: _solr_result.status == 200
+  changed_when: false
+
+- name: Synchronise Solr configuration sets
+  ansible.posix.synchronize:
+    src: "{{ solr_local_configuration_sets_directory }}/{{ item.value.directory | mandatory }}/"
+    dest: "{{ solr_configuration_sets_directory }}/{{ item.value.directory }}/"
+    archive: "{{ solr_configuration_set_synchronize_options.archive | d(false) }}"
+    checksum: "{{ solr_configuration_set_synchronize_options.checksum | d(true) }}"
+    copy_links: "{{ solr_configuration_set_synchronize_options.copy_links | d(omit) }}"
+    delete: "{{ solr_configuration_set_synchronize_options.delete | d(true) }}"
+    links: "{{ solr_configuration_set_synchronize_options.links | d(true) }}"
+    recursive: "{{ solr_configuration_set_synchronize_options.recursive | d(true) }}"
+    rsync_opts: "{{ solr_configuration_set_synchronize_options.rsync_opts | d(omit) }}"
+  loop: "{{ solr_configuration_sets | dict2items }}"
+  register: _solr_configset_sync
+
+- name: Upload updated configuration sets to ZooKeeper # noqa no-handler
+  ansible.builtin.command:
+    argv:
+      - "{{ solr_bin_path }}"
+      - zk
+      - upconfig
+      - -n
+      - "{{ result.item.key }}"
+      - -d
+      - "{{ solr_configuration_sets_directory }}/{{ result.item.value.directory }}"
+  loop: "{{ _solr_configset_sync.results }}"
+  loop_control:
+    label: "{{ result.item }}"
+    loop_var: result
+  when: _solr_configset_sync is changed and result is changed
+  changed_when: true
+  run_once: true
+  become: true
+  become_user: "{{ solr_user }}"
+
+- name: Create and reload Solr collections
+  become: true
+  become_user: "{{ solr_user }}"
+  run_once: true
+  block:
+    - name: List Solr collections
+      ansible.builtin.uri:
+        url: "{{ solr_api_url }}/cluster"
+        url_username: "{{ solr_api_username | d(omit) }}"
+        url_password: "{{ solr_api_password | d(omit) }}"
+        force_basic_auth: "{{ solr_api_username is defined and solr_api_password is defined }}"
+        body_format: json
+        timeout: "{{ solr_api_timeout | d(solr_default_api_timeout) }}"
+      register: _solr_cluster_status
+      failed_when: >-
+        _solr_cluster_status.json is not defined or
+        _solr_cluster_status.json.error is defined
+  
+    - name: Create Solr collections
+      ansible.builtin.uri:
+        url: "{{ solr_api_url }}/collections"
+        url_username: "{{ solr_api_username | d(omit) }}"
+        url_password: "{{ solr_api_password | d(omit) }}"
+        force_basic_auth: "{{ solr_api_username is defined and solr_api_password is defined }}"
+        body_format: json
+        method: POST
+        body: "{{ item.value }}"
+        timeout: "{{ solr_api_timeout | d(solr_default_api_timeout) }}"
+      loop: "{{ solr_collections | dict2items }}"
+      register: _solr_collection_create
+      when: (item.value.name | mandatory) not in _solr_cluster_status.json.cluster.collections
+      failed_when: >-
+        _solr_collection_create.json is not defined or
+        _solr_collection_create.json.error is defined
+      changed_when: _solr_collection_create.json.success is defined
+
+    - name: Reload Solr collections
+      ansible.builtin.uri:
+        url: "{{ solr_api_url }}/collections/{{ item }}/reload"
+        url_username: "{{ solr_api_username | d(omit) }}"
+        url_password: "{{ solr_api_password | d(omit) }}"
+        force_basic_auth: "{{ solr_api_username is defined and solr_api_password is defined }}"
+        body_format: json
+        method: POST
+        timeout: "{{ solr_api_timeout | d(solr_default_api_timeout) }}"
+      loop: "{{ _solr_configset_sync | community.general.json_query('results[?changed==`true`].item.key') }}"
+      register: _solr_collection_reload
+      when: >-
+        _solr_configset_sync is changed and
+        item in _solr_cluster_status.json.cluster.collections
+      failed_when: >-
+        _solr_collection_reload.json is not defined or
+        _solr_collection_reload.json.error is defined
+      changed_when: _solr_collection_reload.json.success is defined
