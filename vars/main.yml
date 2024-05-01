@@ -1,4 +1,5 @@
 ---
 solr_service_name: solr
+solr_exporter_service_name: solr-exporter
 
 solr_default_api_timeout: 10

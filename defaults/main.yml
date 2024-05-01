@@ -185,3 +185,53 @@ solr_host_service_configuration: {}
 
 solr_service_configuration_list_merge: replace
 solr_service_configuration_recursive_merge: true
+
+solr_exporter_enabled: false
+
+solr_exporter_service_enabled: true
+# solr_exporter_service_state: started
+solr_exporter_restart_handler_state: restarted
+
+solr_exporter_bin_file: "{{ solr_current_release_path }}/prometheus-exporter/bin/solr-exporter"
+solr_exporter_configuration_file: "{{ solr_configuration_directory }}/solr-exporter-config.xml"
+
+solr_exporter_configuration:
+  # content: |
+  #   <config>
+  #   </config>
+  # template: etc/solr/solr-exporter-config.xml.j2
+  file: etc/solr/solr-exporter-config.xml
+  owner: "{{ solr_user }}"
+  group: "{{ solr_user_group }}"
+
+solr_exporter_environment_file: "/etc/default/solr-exporter"
+# solr_exporter_environment_file_owner:
+# solr_exporter_environment_file_group:
+# solr_exporter_environment_file_mode:
+
+solr_exporter_environment:
+  CONFIG_FILE: "{{ solr_exporter_configuration_file }}"
+  SOLR_URL: "{{ solr_base_url }}"
+  ZK_HOST: "{{ solr_zk_host }}"
+solr_exporter_group_environment: {}
+solr_exporter_host_environment: {}
+
+solr_exporter_service_configuration:
+  Unit:
+    Description: Apache Solr Prometheus exporter
+    Requires: network-online.target solr.service
+    After: network-online.target solr.service
+  Service:
+    User: "{{ solr_user }}"
+    Group: "{{ solr_user_group }}"
+    EnvironmentFile: "{{ solr_exporter_environment_file }}"
+    ExecStart: "{{ solr_exporter_bin_file }}"
+    PrivateDevices: true
+    PrivateTmp: true
+    ProtectControlGroups: true
+    ProtectKernelTunables: true
+    ProtectSystem: strict
+  Install:
+    WantedBy: multi-user.target
+solr_exporter_group_service_configuration: {}
+solr_exporter_host_service_configuration: {}

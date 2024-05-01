@@ -15,3 +15,10 @@
     - solr::configure
     - solr::cloud
   when: solr_cloud | bool
+
+- name: Configure Solr Prometheus exporter
+  ansible.builtin.import_tasks: exporter.yml
+  tags:
+    - solr::configure
+    - solr::exporter
+  when: solr_exporter_enabled | bool
