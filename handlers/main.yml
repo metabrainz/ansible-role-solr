@@ -11,3 +11,11 @@
     state: "{{ solr_restart_handler_state }}"
   when: solr_service_enabled | bool
   ignore_errors: "{{ ansible_check_mode }}"
+
+- name: Restart Solr Prometheus exporter
+  listen: restart solr-exporter
+  ansible.builtin.service:
+    name: "{{ solr_exporter_service_name }}"
+    state: "{{ solr_exporter_restart_handler_state }}"
+  when: solr_exporter_service_enabled | bool
+  ignore_errors: "{{ ansible_check_mode }}"

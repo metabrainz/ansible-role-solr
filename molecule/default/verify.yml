@@ -47,3 +47,24 @@
         - result.json.responseHeader is defined
         - result.json.responseHeader.status == 0
         - result.json.response.numFound == 51
+
+- name: Verify solr1
+  hosts: solr1
+  gather_facts: false
+  tasks:
+    - name: Ensure Solr Prometheus exporter service is started
+      ansible.builtin.service:
+        name: solr-exporer
+        state: started
+      register: result
+      check_mode: true
+      failed_when: result is changed
+
+    - name: Ensure Solr Prometheus exporter is responding
+      ansible.builtin.uri:
+        url: http://localhost:8989/metrics
+      register: result
+      changed_when: false
+      retries: 10
+      delay: 1
+      until: result.status == 200

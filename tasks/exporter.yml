@@ -1,0 +1,54 @@
+- name: Install Solr Prometheus exporter SystemD service
+  ansible.builtin.template:
+    src: etc/systemd/system/service.j2
+    dest: /etc/systemd/system/{{ solr_exporter_service_name }}.service
+    mode: "0644"
+  notify:
+    - reload systemd
+    - restart solr-exporter
+  vars:
+    _service_config: >-
+      {{
+        solr_exporter_service_configuration | combine(
+          solr_exporter_group_service_configuration,
+          solr_exporter_host_service_configuration,
+          list_merge=solr_service_configuration_list_merge,
+          recursive=solr_service_configuration_recursive_merge
+        )
+      }}
+
+- name: Install Solr Prometheus exporter environment file
+  ansible.builtin.template:
+    src: etc/default/environment.j2
+    dest: "{{ solr_exporter_environment_file }}"
+    owner: "{{ solr_exporter_environment_file_owner | d(omit) }}"
+    group: "{{ solr_exporter_environment_file_group | d(omit) }}"
+    mode: "{{ solr_exporter_environment_file_mode | d('0644') }}"
+  notify: restart solr-exporter
+  vars:
+    _environment_vars: >-
+      {{
+        solr_exporter_environment | combine(
+          solr_exporter_group_environment,
+          solr_exporter_host_environment
+        )
+      }}
+
+- name: Install Solr Prometheus exporter configuration file
+  ansible.builtin.template:
+    src: "etc/solr/file.j2"
+    dest: "{{ solr_exporter_configuration_file }}"
+    owner: "{{ item.value.owner | d(omit) }}"
+    group: "{{ item.value.group | d(omit) }}"
+    mode: "{{ item.value.mode | d('0644') }}"
+    backup: "{{ item.value.backup | d(omit) }}"
+  vars:
+    item:
+      value: "{{ solr_exporter_configuration }}"
+
+- name: Enable Solr Prometheus exporter service
+  ansible.builtin.service:
+    name: "{{ solr_exporter_service_name }}"
+    enabled: "{{ solr_exporter_service_enabled | bool }}"
+    state: "{{ solr_exporter_service_state | d(omit) }}"
+  ignore_errors: "{{ ansible_check_mode }}"
