@@ -1,9 +1,4 @@
 ---
-- name: Reload SystemD
-  listen: reload systemd
-  ansible.builtin.systemd:
-    daemon_reload: true
-
 - name: Restart Solr
   listen: restart solr
   ansible.builtin.service:

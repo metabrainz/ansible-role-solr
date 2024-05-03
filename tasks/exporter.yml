@@ -3,9 +3,8 @@
     src: etc/systemd/system/service.j2
     dest: /etc/systemd/system/{{ solr_exporter_service_name }}.service
     mode: "0644"
-  notify:
-    - reload systemd
-    - restart solr-exporter
+  register: _solr_exporter_systemd_service
+  notify: restart solr-exporter
   vars:
     _service_config: >-
       {{
@@ -42,13 +41,15 @@
     group: "{{ item.value.group | d(omit) }}"
     mode: "{{ item.value.mode | d('0644') }}"
     backup: "{{ item.value.backup | d(omit) }}"
+  notify: restart solr-exporter
   vars:
     item:
       value: "{{ solr_exporter_configuration }}"
 
 - name: Enable Solr Prometheus exporter service
-  ansible.builtin.service:
+  ansible.builtin.systemd:
     name: "{{ solr_exporter_service_name }}"
     enabled: "{{ solr_exporter_service_enabled | bool }}"
     state: "{{ solr_exporter_service_state | d(omit) }}"
+    daemon_reload: "{{ _solr_exporter_systemd_service | d() is changed }}"
   ignore_errors: "{{ ansible_check_mode }}"
