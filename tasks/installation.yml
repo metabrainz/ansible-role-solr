@@ -136,6 +136,13 @@
   notify: restart solr
   ignore_errors: "{{ ansible_check_mode }}"
 
+- name: Install Solr binary symlink
+  ansible.builtin.file:
+    src: "{{ solr_bin_file }}"
+    dest: "{{ solr_bin_symlink }}"
+    state: link
+  when: solr_bin_symlink
+  ignore_errors: "{{ ansible_check_mode }}"
 - name: Delete Solr shared libraries
   ansible.builtin.file:
     path: "{{ solr_shared_library_directory }}/{{ item.key }}"

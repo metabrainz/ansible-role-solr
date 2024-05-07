@@ -23,6 +23,7 @@ solr_release_path: "{{ solr_release_directory }}/solr-{{ solr_version }}"
 solr_current_release_path: "{{ solr_release_directory }}/current"
 
 solr_bin_file: "{{ solr_current_release_path }}/bin/solr"
+solr_bin_symlink: "/usr/local/bin/solr"
 solr_configuration_file: "{{ solr_home_directory }}/solr.xml"
 
 solr_unarchive_extra_opts:
