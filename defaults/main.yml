@@ -134,6 +134,9 @@ solr_configuration_set_synchronize_options:
     - "--exclude=.*"
     - "--delete-excluded"
 
+# reload collections when their configset changes
+solr_reload_collections: true
+
 solr_zk_hosts: []
 # solr_zk_hosts:
 #   - "zookeeper1:2181"
@@ -148,6 +151,7 @@ solr_zk_host: >-
     )
   }}
 solr_cloud: "{{ solr_zk_host | d() | ternary(true, false) }}"
+solr_cloud_leader: "{{ inventory_hostname }}"
 
 # solr_shared_libraries:
 #   example-lib-1.0.2.jar:

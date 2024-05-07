@@ -44,7 +44,7 @@
     - "{{ solr_release_path }}"
     - path: "{{ solr_shared_library_directory }}"
       owner: "{{ solr_user }}"
-      group: "{{ solr_user_group }}" 
+      group: "{{ solr_user_group }}"
 
 - name: Stat Solr current release path
   ansible.builtin.stat:
@@ -143,6 +143,7 @@
     state: link
   when: solr_bin_symlink
   ignore_errors: "{{ ansible_check_mode }}"
+
 - name: Delete Solr shared libraries
   ansible.builtin.file:
     path: "{{ solr_shared_library_directory }}/{{ item.key }}"
