@@ -23,7 +23,9 @@
     owner: "{{ solr_environment_file_owner | d(omit) }}"
     group: "{{ solr_environment_file_group | d(omit) }}"
     mode: "{{ solr_environment_file_mode | d('0644') }}"
-  notify: restart solr
+  notify:
+    - restart solr
+    - wait for solr to start
   vars:
     _environment_vars: >-
       {{
@@ -54,7 +56,9 @@
     mode: "{{ item.value.mode | d('0644') }}"
     backup: "{{ item.value.backup | d(omit) }}"
   loop: "{{ _solr_configuration_files | dict2items }}"
-  notify: restart solr
+  notify:
+    - restart solr
+    - wait for solr to start
   vars:
     _solr_configuration_files: >-
       {{

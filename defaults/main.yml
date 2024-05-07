@@ -34,6 +34,8 @@ solr_unarchive_extra_opts:
 solr_service_enabled: true
 # solr_service_state: started
 solr_restart_handler_state: restarted
+solr_restart_wait_retries: 30
+solr_restart_wait_delay: 1
 
 solr_user: solr
 # solr_user_uid:

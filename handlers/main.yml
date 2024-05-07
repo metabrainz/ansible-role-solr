@@ -7,6 +7,22 @@
   when: solr_service_enabled | bool
   ignore_errors: "{{ ansible_check_mode }}"
 
+- name: Wait for Solr to start
+  listen: wait for solr to start
+  ansible.builtin.uri:
+    url: "{{ solr_api_v1_url }}/cores?action=STATUS"
+    url_username: "{{ solr_api_username | d(omit) }}"
+    url_password: "{{ solr_api_password | d(omit) }}"
+    force_basic_auth: "{{ solr_api_username is defined and solr_api_password is defined }}"
+    body_format: json
+    timeout: "{{ solr_api_timeout | d(solr_default_api_timeout) }}"
+  register: _solr_result
+  retries: "{{ solr_restart_wait_retries }}"
+  delay: "{{ solr_restart_wait_delay }}"
+  until: _solr_result.status == 200
+  when: solr_service_enabled | bool and solr_restart_wait_retries > 0
+  changed_when: _solr_result.attempts > 1
+
 - name: Restart Solr Prometheus exporter
   listen: restart solr-exporter
   ansible.builtin.service:
