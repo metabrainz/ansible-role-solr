@@ -238,6 +238,7 @@ solr_exporter_service_configuration:
     ProtectControlGroups: true
     ProtectKernelTunables: true
     ProtectSystem: strict
+    SuccessExitStatus: 143
   Install:
     WantedBy: multi-user.target
 solr_exporter_group_service_configuration: {}
