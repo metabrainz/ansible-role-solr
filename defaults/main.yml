@@ -90,6 +90,17 @@ solr_security_file_group: "{{ solr_user_group }}"
 solr_security_file_mode: "0640"
 # solr_security_file_backup: false
 
+# the default is a subdirectory of $SOLR_HOME due to the Java security
+# manager, which was enabled in Solr 9
+solr_properties_directory: "{{ solr_home_directory }}/properties"
+# solr_properties_directory_owner:
+solr_properties_directory_group: "{{ solr_user_group }}"
+solr_properties_directory_mode: "0750"
+
+solr_properties: {}
+solr_group_properties: {}
+solr_host_properties: {}
+
 solr_environment_file: "/etc/default/solr.in.sh"
 # solr_environment_file_owner:
 # solr_environment_file_group:

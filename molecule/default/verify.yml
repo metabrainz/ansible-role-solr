@@ -53,6 +53,19 @@
         - result.json.responseHeader.status == 0
         - result.json.response.numFound == 51
 
+    - name: Ensure properties file is valid
+      ansible.builtin.lineinfile:
+        path: /var/lib/solr/properties/basicAuth.conf
+        line: "{{ item.key }}={{ item.value }}"
+      loop: "{{ properties | dict2items }}"
+      register: result
+      check_mode: true
+      failed_when: result is changed
+      vars:
+        properties:
+          httpBasicAuthUser: "{{ solr_api_username }}"
+          httpBasicAuthPassword: "{{ solr_api_password }}"
+
     - name: Ensure Solr password hash is correct
       ansible.builtin.command:
         argv:

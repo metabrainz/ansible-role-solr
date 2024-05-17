@@ -1,3 +1,12 @@
 zookeeper_server_configuration:
   hostname: "{{ inventory_hostname }}"
   id: "{{ groups['zookeeper_servers'].index(inventory_hostname) + 1 }}"
+
+zookeeper_group_configuration:
+  # needed for Solr admin page
+  4lw:
+    commands:
+      whitelist:
+        - conf
+        - mntr
+        - ruok

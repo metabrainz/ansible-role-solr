@@ -16,6 +16,11 @@ solr_group_environment:
   SOLR_AUTH_TYPE: basic
   SOLR_AUTHENTICATION_OPTS: "-Dbasicauth=solr:SolrRocks"
 
+solr_properties:
+  basicAuth.conf:
+    httpBasicAuthUser: "{{ solr_api_username }}"
+    httpBasicAuthPassword: "{{ solr_api_password }}"
+
 solr_host_security_configuration:
   authentication:
     blockUnknown: true

@@ -87,6 +87,28 @@
           recursive=True
         )
       }}
+
+- name: Install Solr property files directory
+  ansible.builtin.file:
+    path: "{{ solr_properties_directory }}"
+    owner: "{{ solr_properties_directory_owner | d(omit) }}"
+    group: "{{ solr_properties_directory_group }}"
+    mode: "{{ solr_properties_directory_mode }}"
+    state: directory
+
+- name: Install Solr property files
+  ansible.builtin.template:
+    src: etc/solr/properties/file.properties.j2
+    dest: "{{ solr_properties_directory }}/{{ item.key }}"
+    mode: "0644"
+  loop: "{{ _solr_properties | dict2items }}"
+  vars:
+    _solr_properties: >-
+      {{
+        solr_properties | combine(
+          solr_group_properties,
+          solr_host_properties,
+          recursive=True
         )
       }}
 

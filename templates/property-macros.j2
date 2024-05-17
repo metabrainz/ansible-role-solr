@@ -1,0 +1,15 @@
+#jinja2: trim_blocks: True, lstrip_blocks: True
+
+{% macro format_property(property, value) -%}
+{% if value is boolean %}
+{{ property }}={{ value | string | lower }}
+{% elif value is list %}
+{{ property }}={{ value | join(',') }}
+{% elif value is mapping %}
+{%   for o, v in (value | dictsort) %}
+{{ property }}.{{ format_property(o, v) -}}
+{%   endfor %}
+{% else %}
+{{ property }}={{ value | string }}
+{% endif %}
+{% endmacro -%}
