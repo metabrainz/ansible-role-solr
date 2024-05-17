@@ -101,7 +101,7 @@
 
       - name: Reload Solr collections
         ansible.builtin.uri:
-          url: "{{ solr_api_v1_url }}/admin/collections?name={{ item }}&action=RELOAD"
+          url: "{{ solr_api_v1_url }}/collections?name={{ item }}&action=RELOAD"
           url_username: "{{ solr_api_username | d(omit) }}"
           url_password: "{{ solr_api_password | d(omit) }}"
           force_basic_auth: "{{ solr_api_username is defined and solr_api_password is defined }}"
@@ -110,7 +110,7 @@
         loop: "{{ _solr_configset_sync | community.general.json_query('results[?changed==`true`].item.key') }}"
         register: _solr_collection_reload
         when: >-
-          solr_reload_collections and
+          solr_reload_collections | bool and
           _solr_configset_sync is changed and
           item in _solr_cluster_status.json.cluster.collections
         failed_when: >-
