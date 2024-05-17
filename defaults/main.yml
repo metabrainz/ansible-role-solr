@@ -62,22 +62,33 @@ solr_configuration:
   owner: "{{ solr_user }}"
   group: "{{ solr_user_group }}"
 
-# solr_security_configuration:
-#   authentication:
-#     blockUnknown: false
-#   # authentication:
-#   #   class: solr.BasicAuthPlugin
-#   #   credentials:
-#   #     solr: IV0EHq1OnNrj6gvRCwvFwTrZ1+z1oBbnQdiVC3otuq0= Ndd7LKvVBAaZIF0QAVi1ekCfAJXr1GGfLtRUXhgrF8c=
-# solr_group_security_configuration: {}
-# solr_host_security_configuration: {}
-# solr_security_configuration_file: "{{ solr_home_directory }}/security.json"
-
 solr_configuration_files:
   log4j2.xml:
     file: etc/solr/log4j2.xml
 solr_group_configuration_files: {}
 solr_host_configuration_files: {}
+
+# solr_security_configuration:
+#   authentication:
+#     blockUnknown: true
+#     class: solr.BasicAuthPlugin
+#     credentials:
+#       solr: "{{ 'SolrRocks' | solr_password_hash(salt='<32 byte salt>') }}"
+#   authorization:
+#     class: solr.RuleBasedAuthorizationPlugin
+#     permissions:
+#       - name: security-edit
+#         role: admin
+#     user-role:
+#       solr: admin
+solr_security_configuration: {}
+solr_group_security_configuration: {}
+solr_host_security_configuration: {}
+solr_security_file: "{{ solr_home_directory }}/security.json"
+# solr_security_file_owner:
+solr_security_file_group: "{{ solr_user_group }}"
+solr_security_file_mode: "0640"
+# solr_security_file_backup: false
 
 solr_environment_file: "/etc/default/solr.in.sh"
 # solr_environment_file_owner:

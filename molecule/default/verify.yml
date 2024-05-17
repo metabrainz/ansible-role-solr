@@ -15,6 +15,8 @@
       ansible.builtin.uri:
         url: http://localhost:8983/api/cluster
         body_format: json
+        user: "{{ solr_api_username }}"
+        password: "{{ solr_api_password }}"
       register: result
       changed_when: false
       failed_when: >-
@@ -27,8 +29,9 @@
 
     - name: Index techproducts data # noqa command-instead-of-shell run-once[task]
       ansible.builtin.shell: >-
-        /opt/solr/releases/current/bin/solr
-        post -c techproducts
+        /opt/solr/releases/current/bin/post
+        -c techproducts
+        -u {{ solr_api_username }}:{{ solr_api_password }}
         /opt/solr/releases/current/example/exampledocs/*
       changed_when: true
       run_once: true
@@ -37,6 +40,8 @@
       ansible.builtin.uri:
         url: http://localhost:8983/solr/techproducts/select?indent=on&q=*:*
         body_format: json
+        user: "{{ solr_api_username }}"
+        password: "{{ solr_api_password }}"
       register: result
       changed_when: false
       retries: 30
@@ -47,6 +52,22 @@
         - result.json.responseHeader is defined
         - result.json.responseHeader.status == 0
         - result.json.response.numFound == 51
+
+    - name: Ensure Solr password hash is correct
+      ansible.builtin.command:
+        argv:
+          - grep
+          - -q
+          - IV0EHq1OnNrj6gvRCwvFwTrZ1+z1oBbnQdiVC3otuq0= Ndd7LKvVBAaZIF0QAVi1ekCfAJXr1GGfLtRUXhgrF8c=
+          - /var/lib/solr/security.json
+      changed_when: false
+
+    - name: Ensure basic authentication is required
+      ansible.builtin.uri:
+        url: http://localhost:8983/solr/techproducts/admin/ping
+        status_code:
+          - 401
+      changed_when: false
 
 - name: Verify solr1
   hosts: solr1

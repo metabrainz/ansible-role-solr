@@ -65,7 +65,28 @@
         solr_configuration_files | combine(
           solr_group_configuration_files,
           solr_host_configuration_files,
-          recursive=true
+          recursive=True
+        )
+      }}
+
+- name: Install Solr security configuration
+  ansible.builtin.template:
+    src: "var/lib/solr/security.json.j2"
+    dest: "{{ solr_security_file }}"
+    owner: "{{ solr_security_file_owner | d(omit) }}"
+    group: "{{ solr_security_file_group | d(solr_user_group) }}"
+    mode: "{{ solr_security_file_mode | d('0640') }}"
+    backup: "{{ solr_security_file_backup | d(omit) }}"
+  register: _solr_security_file
+  vars:
+    _solr_security_configuration: >-
+      {{
+        solr_security_configuration | combine(
+          solr_group_security_configuration,
+          solr_host_security_configuration,
+          recursive=True
+        )
+      }}
         )
       }}
 
