@@ -11,9 +11,12 @@
       - "{{ solr_zk_chroot }}"
   when: solr_zk_chroot | d()
   register: _solr_zk_mkroot
+  # If the directory exists the command does nothing and errors with "KeeperErrorCode = NodeExists",
+  # otherwise it creates the directory and returns a success code without this error message.
   changed_when:
     - _solr_zk_mkroot.rc == 0
     - '"KeeperErrorCode" not in _solr_zk_mkroot.stderr'
+  # If the command errors with another message than above, fail the task.
   failed_when:
     - _solr_zk_mkroot.rc != 0
     - '"KeeperErrorCode = NodeExists" not in _solr_zk_mkroot.stderr'
