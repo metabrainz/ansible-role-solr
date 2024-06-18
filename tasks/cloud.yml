@@ -32,7 +32,7 @@
       - "zk:security.json"
   when:
     - inventory_hostname == solr_cloud_leader
-    - _solr_zk_mkroot | d() is changed or _solr_security_file | d() is changed
+    - _solr_zk_mkroot | d({}) is changed or _solr_security_file | d({}) is changed
   changed_when: true
   become: true
   become_user: "{{ solr_user }}"
@@ -41,7 +41,7 @@
   ansible.builtin.meta: flush_handlers
   delegate_to: "{{ item }}"
   loop: "{{ [solr_cloud_leader, ansible_play_hosts_all] | flatten | unique }}"
-  when: _solr_zk_mkroot | d() is changed
+  when: _solr_zk_mkroot | d({}) is changed
 
 - name: Manage Solr configuration sets and collections
   when: inventory_hostname == solr_cloud_leader
@@ -70,11 +70,11 @@
         - "{{ result.item.key }}"
         - -d
         - "{{ solr_configuration_sets_directory }}/{{ result.item.value.directory }}"
-    loop: "{{ _solr_configset_sync.results }}"
+    loop: "{{ _solr_configset_sync.results | d([]) }}"
     loop_control:
       label: "{{ result.item }}"
       loop_var: result
-    when: _solr_configset_sync is changed and result is changed
+    when: _solr_configset_sync | d({}) is changed and result is changed
     changed_when: true
     become: true
     become_user: "{{ solr_user }}"
@@ -126,7 +126,7 @@
         register: _solr_collection_reload
         when: >-
           solr_reload_collections | bool and
-          _solr_configset_sync is changed and
+          _solr_configset_sync | d({}) is changed and
           item in _solr_cluster_status.json.cluster.collections
         failed_when: >-
           _solr_collection_reload.json is not defined or
