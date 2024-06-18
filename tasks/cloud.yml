@@ -11,12 +11,12 @@
       - "{{ solr_zk_chroot }}"
   when: solr_zk_chroot | d()
   register: _solr_zk_mkroot
-  changed_when: >-
-    _solr_zk_mkroot.rc == 0 and
-    "KeeperErrorCode" not in _solr_zk_mkroot.stderr
-  failed_when: >-
-    _solr_zk_mkroot.rc != 0 and
-    "KeeperErrorCode = NodeExists" not in _solr_zk_mkroot.stderr
+  changed_when:
+    - _solr_zk_mkroot.rc == 0
+    - '"KeeperErrorCode" not in _solr_zk_mkroot.stderr'
+  failed_when:
+    - _solr_zk_mkroot.rc != 0
+    - '"KeeperErrorCode = NodeExists" not in _solr_zk_mkroot.stderr'
   become: true
   become_user: "{{ solr_user }}"
   run_once: true
@@ -124,10 +124,10 @@
           timeout: "{{ solr_api_timeout | d(solr_default_api_timeout) }}"
         loop: "{{ _solr_configset_sync | community.general.json_query('results[?changed==`true`].item.key') }}"
         register: _solr_collection_reload
-        when: >-
-          solr_reload_collections | bool and
-          _solr_configset_sync | d({}) is changed and
-          item in _solr_cluster_status.json.cluster.collections
+        when:
+          - solr_reload_collections | bool
+          - _solr_configset_sync | d({}) is changed
+          - item in _solr_cluster_status.json.cluster.collections | d({})
         failed_when: >-
           _solr_collection_reload.json is not defined or
           _solr_collection_reload.json.error is defined
