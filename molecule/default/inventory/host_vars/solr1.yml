@@ -1,1 +1,4 @@
 solr_exporter_enabled: true
+
+solr_exporter_group_environment:
+  CREDENTIALS: "{{ solr_api_username }}:{{ solr_api_password }}"
