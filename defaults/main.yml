@@ -103,8 +103,8 @@ solr_host_properties: {}
 
 solr_environment_file: "/etc/default/solr.in.sh"
 # solr_environment_file_owner:
-# solr_environment_file_group:
-# solr_environment_file_mode:
+solr_environment_file_group: "{{ solr_user_group }}"
+solr_environment_file_mode: "0640"
 
 # see below for a list of environment variable to system property mappings
 # https://github.com/apache/solr/blob/c512116f6a20b3ccd0c76c0743053553da2ff53b/solr/solrj/src/resources/EnvToSyspropMappings.properties
@@ -235,8 +235,8 @@ solr_exporter_configuration:
 
 solr_exporter_environment_file: "/etc/default/solr-exporter"
 # solr_exporter_environment_file_owner:
-# solr_exporter_environment_file_group:
-# solr_exporter_environment_file_mode:
+solr_exporter_environment_file_group: "{{ solr_user_group }}"
+solr_exporter_environment_file_mode: "0640"
 
 solr_exporter_environment:
   CONFIG_FILE: "{{ solr_exporter_configuration_file }}"
