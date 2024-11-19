@@ -1,9 +1,9 @@
 ---
-solr_version: 9.5.0
+# solr_version: 9.7.0
 solr_download_url: >-
-   https://archive.apache.org/dist/solr/solr/{{ solr_version }}/solr-{{ solr_version }}.tgz
-solr_download_checksum: >-
-  sha512:e34b2421db8586691ff41b86beca77bcb61243ce8edfade74eda8da4b0fabde0078884db301350a0d0dfc4a6fee46320ddf059469300444da4e3693220df5e40
+   https://archive.apache.org/dist/solr/solr/{{ solr_version }}/solr-{{ solr_version | mandatory }}.tgz
+# solr_download_checksum: >-
+#   sha512:a80417a79c8371d2049868573927c587b4a5b7b37e938ca6e64e8a8842449f49eddc987968ddad5d6b6b1f4395990c1edc4576a884b3a62c4fbcd97091a659d9
 # solr_local_download_directory: ~/.cache/ansible/solr
 # solr_local_download_directory_mode: "0750"
 
