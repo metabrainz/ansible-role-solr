@@ -1,29 +1,43 @@
 ---
+
 - name: Create ZooKeeper chroot
-  ansible.builtin.command:
-    argv:
-      - "{{ solr_bin_file }}"
-      - zk
-      - mkroot
-      - -z
-      # we can't use solr_zk_host here as it includes the non-existent chroot
-      - "{{ solr_zk_hosts | join(',') }}"
-      - "{{ solr_zk_chroot }}"
   when: solr_zk_chroot | d()
-  register: _solr_zk_mkroot
-  # If the directory exists the command does nothing and errors with "KeeperErrorCode = NodeExists",
-  # otherwise it creates the directory and returns a success code without this error message.
-  changed_when:
-    - _solr_zk_mkroot.rc == 0
-    - '"KeeperErrorCode" not in _solr_zk_mkroot.stderr'
-  # If the command errors with another message than above, fail the task.
-  failed_when:
-    - _solr_zk_mkroot.rc != 0
-    - '"KeeperErrorCode = NodeExists" not in _solr_zk_mkroot.stderr'
   become: true
   become_user: "{{ solr_user }}"
   run_once: true
   delegate_to: "{{ solr_cloud_leader }}"
+  vars:
+    _solr_zkhost: "{{ solr_zk_hosts | join(',') }}"
+  block:
+    - name: Check if ZooKeeper chroot exists
+      ansible.builtin.command:
+        argv:
+          - "{{ solr_bin_file }}"
+          - zk
+          - ls
+          - -z
+          - "{{ _solr_zkhost }}"
+          - "{{ solr_zk_chroot }}"
+      register: _solr_zk_ls
+      changed_when: false
+      failed_when:
+        - _solr_zk_ls.rc != 0
+        - '"KeeperErrorCode = NoNode" not in _solr_zk_ls.stderr'
+
+    - name: Create ZooKeeper chroot
+      ansible.builtin.command:
+        argv:
+          - "{{ solr_bin_file }}"
+          - zk
+          - mkroot
+          - -z
+          - "{{ _solr_zkhost }}"
+          - "{{ solr_zk_chroot }}"
+      register: _solr_zk_mkroot
+      when:
+        - _solr_zk_ls.rc != 0
+        - '"KeeperErrorCode = NoNode" in _solr_zk_ls.stderr'
+      changed_when: true
 
 - name: Upload updated security configuration to ZooKeeper # noqa no-handler
   ansible.builtin.command:
