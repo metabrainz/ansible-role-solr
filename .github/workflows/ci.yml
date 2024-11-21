@@ -41,6 +41,7 @@ jobs:
     needs:
       - lint
     strategy:
+      fail-fast: false
       matrix:
         python:
           - "3.10"
