@@ -1,3 +1,4 @@
+---
 solr_exporter_enabled: true
 
 solr_exporter_group_environment:

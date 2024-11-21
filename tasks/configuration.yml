@@ -1,3 +1,4 @@
+---
 - name: Install Solr SystemD service
   ansible.builtin.template:
     src: etc/systemd/system/service.j2
