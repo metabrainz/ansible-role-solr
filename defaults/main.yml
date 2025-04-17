@@ -41,7 +41,7 @@ solr_user: solr
 # solr_user_uid:
 solr_user_group: solr
 # solr_user_group_gid:
-solr_user_shell: /usr/sbin/nologin
+solr_user_shell: /bin/bash
 solr_user_home: /var/lib/solr
 # solr_user_create_home: true
 
