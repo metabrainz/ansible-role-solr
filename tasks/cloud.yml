@@ -125,7 +125,9 @@
             timeout: "{{ solr_api_timeout | d(solr_default_api_timeout) }}"
           loop: "{{ solr_collections | dict2items }}"
           register: _solr_collection_create
-          when: (item.value.name | mandatory) not in _solr_cluster_status.json.cluster.collections
+          when:
+            - _solr_cluster_status.json.cluster.collections is defined
+            - (item.value.name | mandatory) not in _solr_cluster_status.json.cluster.collections
           failed_when: >-
             _solr_collection_create.json is not defined or
             _solr_collection_create.json.error is defined
