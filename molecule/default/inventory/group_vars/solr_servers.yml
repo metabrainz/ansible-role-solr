@@ -1,8 +1,8 @@
-solr_version: 9.7.0
+solr_version: 9.11.0
 solr_download_url: >-
   https://dlcdn.apache.org/solr/solr/{{ solr_version }}/solr-{{ solr_version }}.tgz
 solr_download_checksum: >-
-  sha512:a80417a79c8371d2049868573927c587b4a5b7b37e938ca6e64e8a8842449f49eddc987968ddad5d6b6b1f4395990c1edc4576a884b3a62c4fbcd97091a659d9
+  sha512:0cf320f15662b03844e2d3e983b2a50abab3e643d9aff53ed5a4481ef870776420c7bd8dfde377183d44304dcc589f6784ab020eb7c6675000f86fe32fff4057
 
 solr_jetty_host: 0.0.0.0
 solr_url: "http://127.0.0.1:{{ solr_port }}"

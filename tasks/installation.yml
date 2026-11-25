@@ -62,7 +62,7 @@
     - not _solr_current_release_path.stat.islnk
 
 - name: Check if Solr archive exists on hosts
-  when: solr_local_download_directory | d()
+  when: solr_local_download_directory | d('') | length > 0
   ansible.builtin.stat:
     path: "{{ solr_download_directory }}/{{ solr_download_url | basename }}"
     get_attributes: false
@@ -72,8 +72,8 @@
 
 - name: Download Solr archive locally and copy to hosts
   when:
-    - solr_local_download_directory | d()
-    - not _solr_archive.stat.isreg | d()
+    - solr_local_download_directory | d('') | length > 0
+    - not _solr_archive.stat.isreg | d(False)
   block:
     - name: Create local download directory
       ansible.builtin.file:
@@ -113,7 +113,7 @@
     mode: "0644"
   register: _solr_download
   ignore_errors: "{{ ansible_check_mode }}"
-  when: not solr_local_download_directory | d()
+  when: solr_local_download_directory | d('') | length == 0
 
 - name: Unarchive Solr
   ansible.builtin.unarchive:
@@ -126,7 +126,7 @@
   when: >-
     (_solr_copy | d()) is changed or
     (_solr_download | d()) is changed or
-    (solr_force_unarchive | d())
+    (solr_force_unarchive | d(False) | bool)
 
 - name: Install Solr current release symlink
   ansible.builtin.file:
@@ -141,7 +141,7 @@
     src: "{{ solr_bin_file }}"
     dest: "{{ solr_bin_symlink }}"
     state: link
-  when: solr_bin_symlink
+  when: solr_bin_symlink | d('') | length > 0
   ignore_errors: "{{ ansible_check_mode }}"
 
 - name: Delete Solr shared libraries
@@ -158,7 +158,7 @@
     url: "{{ item.value.url }}"
     checksum: "{{ item.value.checksum | d(omit) }}"
     mode: "{{ item.value.mode | d('0644') }}"
-  when: item.value.url | d()
+  when: item.value.url | d('') | length > 0
   loop: "{{ solr_shared_libraries | dict2items }}"
   notify: restart solr
 
@@ -167,6 +167,8 @@
     dest: "{{ solr_shared_library_directory }}/{{ item.key }}"
     src: "{{ item.value.file }}"
     mode: "{{ item.value.mode | d('0644') }}"
-  when: (item.value.file | d()) and (item.value.state | d()) != "absent"
+  when:
+    - item.value.file | d('') | length > 0
+    - item.value.state | d() != "absent"
   loop: "{{ solr_shared_libraries | dict2items }}"
   notify: restart solr

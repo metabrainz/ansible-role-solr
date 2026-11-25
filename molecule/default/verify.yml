@@ -28,11 +28,13 @@
         result.json.cluster.collections.techproducts.health != "GREEN"
 
     - name: Index techproducts data # noqa command-instead-of-shell run-once[task]
-      ansible.builtin.shell: >-
-        /opt/solr/releases/current/bin/post
+      ansible.builtin.shell:
+        SOLR_AUTH_TYPE="basic"
+        SOLR_AUTHENTICATION_OPTS="-Dsolr.security.auth.basicauth.credentials={{ solr_api_username }}:{{ solr_api_password }}"
+        /opt/solr/releases/current/bin/solr
+        post
         -c techproducts
-        -u {{ solr_api_username }}:{{ solr_api_password }}
-        /opt/solr/releases/current/example/exampledocs/*
+        /opt/solr/releases/current/example/exampledocs/*.xml
       changed_when: true
       run_once: true
 
@@ -51,7 +53,7 @@
         - result.json is defined
         - result.json.responseHeader is defined
         - result.json.responseHeader.status == 0
-        - result.json.response.numFound == 51
+        - result.json.response.numFound == 31
 
     - name: Ensure properties file is valid
       ansible.builtin.lineinfile:

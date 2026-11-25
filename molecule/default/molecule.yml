@@ -5,7 +5,7 @@ driver:
   name: docker
 platforms:
   - name: solr1
-    image: "geerlingguy/docker-${MOLECULE_DISTRO:-ubuntu2004}-ansible:latest"
+    image: "geerlingguy/docker-${MOLECULE_DISTRO:-ubuntu2604}-ansible:latest"
     command: ${MOLECULE_DOCKER_COMMAND:-""}
     networks:
       - name: zookeeper
@@ -18,7 +18,7 @@ platforms:
     groups:
       - solr_servers
   - name: solr2
-    image: "geerlingguy/docker-${MOLECULE_DISTRO:-ubuntu2004}-ansible:latest"
+    image: "geerlingguy/docker-${MOLECULE_DISTRO:-ubuntu2604}-ansible:latest"
     command: ${MOLECULE_DOCKER_COMMAND:-""}
     networks:
       - name: zookeeper
@@ -31,7 +31,7 @@ platforms:
     groups:
       - solr_servers
   - name: zookeeper1
-    image: "geerlingguy/docker-${MOLECULE_DISTRO:-ubuntu2004}-ansible:latest"
+    image: "geerlingguy/docker-${MOLECULE_DISTRO:-ubuntu2604}-ansible:latest"
     command: ${MOLECULE_DOCKER_COMMAND:-""}
     networks:
       - name: zookeeper
@@ -44,7 +44,7 @@ platforms:
     groups:
       - zookeeper_servers
   - name: zookeeper2
-    image: "geerlingguy/docker-${MOLECULE_DISTRO:-ubuntu2004}-ansible:latest"
+    image: "geerlingguy/docker-${MOLECULE_DISTRO:-ubuntu2604}-ansible:latest"
     command: ${MOLECULE_DOCKER_COMMAND:-""}
     networks:
       - name: zookeeper
@@ -57,7 +57,7 @@ platforms:
     groups:
       - zookeeper_servers
   - name: zookeeper3
-    image: "geerlingguy/docker-${MOLECULE_DISTRO:-ubuntu2004}-ansible:latest"
+    image: "geerlingguy/docker-${MOLECULE_DISTRO:-ubuntu2604}-ansible:latest"
     command: ${MOLECULE_DOCKER_COMMAND:-""}
     networks:
       - name: zookeeper

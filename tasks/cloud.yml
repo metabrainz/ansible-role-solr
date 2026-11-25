@@ -1,7 +1,7 @@
 ---
 
 - name: Create ZooKeeper chroot
-  when: solr_zk_chroot | d()
+  when: solr_zk_chroot | d('') | length > 0
   become: true
   become_user: "{{ solr_user }}"
   run_once: true
